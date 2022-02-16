@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
 
 # * Artist Page
 default_page = "https://www.azlyrics.com/w/west.html"
@@ -11,15 +12,11 @@ page1 = "https://www.azlyrics.com/lyrics/kanyewest/gorgeous.html"
 # * Example page with no <i> tags
 page2 = "https://www.azlyrics.com/lyrics/kanyewest/illflyaway.html"
 
-# * To make things modular we need:
-# * A function that extracts the verses of a page
-# * A function that saves those verses into a txt file
-
-
 # * Function to extract the lyrics out of an azlyrics webpage
-# * Returns a Dictionnary containing artists and their Verses
-# ! Only works if page contains an <i> Artist </i> tag
-def extract_lyrics(page):
+# * Returns a Dictionnary containing artists and their respective Verses
+
+
+def scrape_lyrics(page):
     verses = {}
     html_text = requests.get(page).content
     soup = BeautifulSoup(html_text, "html.parser")
@@ -54,6 +51,18 @@ def extract_lyrics(page):
     return verses
 
 
-# * Just testing if things work as they should
-verses = extract_lyrics(page1)
-print(verses["Kid Cudi"])
+# * Finds the different song links from an artist home_page
+def find_song_links(artist_page, home="https://www.azlyrics.com"):
+    html_text = requests.get(artist_page).content
+    soup = BeautifulSoup(html_text, "html.parser")
+    links = []
+    for song in soup.find_all("div", {"class": "listalbum-item"}):
+        print(song)
+        # Needed for songs which don't have links
+        try:
+            url = song.find("a")["href"]
+            link = home+url
+            links.append(link)
+        except TypeError:
+            pass
+    return links
