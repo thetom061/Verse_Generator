@@ -51,18 +51,37 @@ def scrape_lyrics(page):
     return verses
 
 
-# * Finds the different song links from an artist home_page
+# * Finds the different song links from an artist home_page in dict
 def find_song_links(artist_page, home="https://www.azlyrics.com"):
     html_text = requests.get(artist_page).content
     soup = BeautifulSoup(html_text, "html.parser")
-    links = []
+    links = {}
     for song in soup.find_all("div", {"class": "listalbum-item"}):
-        print(song)
         # Needed for songs which don't have links
         try:
             url = song.find("a")["href"]
             link = home+url
-            links.append(link)
+            links[song.get_text()] = link
         except TypeError:
             pass
     return links
+
+# links is the dict containing link associated to a song
+
+
+def store_lyrics_to_files(links, filter=None, dir_name=".\Data"):
+    try:
+        os.mkdir(dir_name)
+    except FileExistsError:
+        pass
+    for song, link in links.items():
+        lyrics = scrape_lyrics(link)
+        with open(os.path.join(dir_name, f"{song}.txt"), "w") as f:
+            for artist in lyrics:
+                if filter is None:
+                    verses = lyrics[artist]
+                    f.write("".join(verses))
+            f.close()
+
+
+store_lyrics_to_files(find_song_links(default_page))
